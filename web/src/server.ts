@@ -24,6 +24,7 @@ import { getDemoSigners } from "./lib/serverSigners";
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = path.resolve(__dirname, "../public");
+const THREE_BUILD_DIR = path.resolve(__dirname, "../node_modules/three/build");
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -276,7 +277,7 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
     const body = await readJsonBody(req);
     const action = String(body.action || "");
     const dep = loadDeployment();
-    const { owner, guardian } = getDemoSigners();
+    const { owner, guardian, escapePod } = getDemoSigners();
     const publicClient = getPublicClient();
     const vaultAddr = dep.contracts.AegisPodVault;
 
@@ -407,6 +408,21 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
     }
 
     if (action === "reseedDemo") {
+      // Auto-recycle swept MON from EscapePod back to Owner if Owner gas is running low
+      const [ownerBal, escapeBal] = await Promise.all([
+        publicClient.getBalance({ address: owner.address }),
+        publicClient.getBalance({ address: escapePod.address }),
+      ]);
+      if (ownerBal < parseEther("0.12") && escapeBal > parseEther("0.06")) {
+        const recycleAmt = escapeBal - parseEther("0.02");
+        await sendSignedTxSync({
+          account: escapePod,
+          to: owner.address,
+          value: recycleAmt,
+          gasLimit: 21_000n,
+        });
+      }
+
       const isFrozen = await publicClient.readContract({
         address: vaultAddr,
         abi: AEGIS_VAULT_ABI,
@@ -452,35 +468,51 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
         }
       }
 
-      const mintSteps: Array<{ to: Address; data: `0x${string}`; fallbackGas: bigint }> = [
-        {
+      // Idempotently top up only missing demo assets to save gas on repeated resets
+      const [curUsdt, curWeth, curWbtc, curNft, curMon] = await Promise.all([
+        publicClient.readContract({ address: dep.contracts.MockUSDT, abi: MOCK_ERC20_ABI, functionName: "balanceOf", args: [vaultAddr] }),
+        publicClient.readContract({ address: dep.contracts.MockWETH, abi: MOCK_ERC20_ABI, functionName: "balanceOf", args: [vaultAddr] }),
+        publicClient.readContract({ address: dep.contracts.MockWBTC, abi: MOCK_ERC20_ABI, functionName: "balanceOf", args: [vaultAddr] }),
+        publicClient.readContract({ address: dep.contracts.AegisGenesisNFT, abi: MOCK_NFT_ABI, functionName: "balanceOf", args: [vaultAddr] }),
+        publicClient.getBalance({ address: vaultAddr }),
+      ]);
+
+      const mintSteps: Array<{ to: Address; data: `0x${string}`; fallbackGas: bigint }> = [];
+      if (curUsdt < parseUnits("50000", 6)) {
+        mintSteps.push({
           to: dep.contracts.MockUSDT,
           data: encodeFunctionData({
             abi: MOCK_ERC20_ABI,
             functionName: "mint",
-            args: [vaultAddr, parseUnits("50000", 6)],
+            args: [vaultAddr, parseUnits("50000", 6) - curUsdt],
           }),
           fallbackGas: 130_000n,
-        },
-        {
+        });
+      }
+      if (curWeth < parseUnits("12.5", 18)) {
+        mintSteps.push({
           to: dep.contracts.MockWETH,
           data: encodeFunctionData({
             abi: MOCK_ERC20_ABI,
             functionName: "mint",
-            args: [vaultAddr, parseUnits("12.5", 18)],
+            args: [vaultAddr, parseUnits("12.5", 18) - curWeth],
           }),
           fallbackGas: 130_000n,
-        },
-        {
+        });
+      }
+      if (curWbtc < parseUnits("0.85", 8)) {
+        mintSteps.push({
           to: dep.contracts.MockWBTC,
           data: encodeFunctionData({
             abi: MOCK_ERC20_ABI,
             functionName: "mint",
-            args: [vaultAddr, parseUnits("0.85", 8)],
+            args: [vaultAddr, parseUnits("0.85", 8) - curWbtc],
           }),
           fallbackGas: 130_000n,
-        },
-        {
+        });
+      }
+      if (curNft < 1n) {
+        mintSteps.push({
           to: dep.contracts.AegisGenesisNFT,
           data: encodeFunctionData({
             abi: MOCK_NFT_ABI,
@@ -488,8 +520,8 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
             args: [vaultAddr],
           }),
           fallbackGas: 320_000n,
-        },
-      ];
+        });
+      }
 
       for (const step of mintSteps) {
         const r = await sendSignedTxSync({
@@ -501,12 +533,11 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
         hashes.push(r.hash);
       }
 
-      const vaultMon = await publicClient.getBalance({ address: vaultAddr });
-      if (vaultMon < parseEther("0.01")) {
+      if (curMon < parseEther("0.01")) {
         const r = await sendSignedTxSync({
           account: owner,
           to: vaultAddr,
-          value: parseEther("0.02"),
+          value: parseEther("0.01"),
           fallbackGas: 60_000n,
         });
         hashes.push(r.hash);
@@ -516,7 +547,7 @@ async function handleAction(req: http.IncomingMessage, res: http.ServerResponse)
         ok: true,
         action,
         txCount: hashes.length,
-        lastHash: hashes[hashes.length - 1],
+        lastHash: hashes[hashes.length - 1] || null,
       });
     }
 
@@ -621,6 +652,19 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === "/api/qr" && req.method === "GET") {
     return handleQr(req, res);
+  }
+
+  if (pathname.startsWith("/vendor/three/")) {
+    const sub = path.basename(pathname);
+    const filePath = path.join(THREE_BUILD_DIR, sub);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      res.writeHead(200, {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=86400",
+      });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
   }
 
   // Static assets from web/public/

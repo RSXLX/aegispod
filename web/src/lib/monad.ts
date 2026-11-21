@@ -158,6 +158,8 @@ export async function estimateTightGas(params: {
   }
 }
 
+const lastNonceByAddr = new Map<string, number>();
+
 /**
  * Sends a signed EIP-1559 transaction on Monad Testnet using `eth_sendRawTransactionSync`
  * across available Monad RPCs (returning the receipt in a single round-trip for ~600ms finality UX),
@@ -172,7 +174,7 @@ export async function sendSignedTxSync(params: {
   fallbackGas?: bigint;
 }): Promise<SyncTxResult> {
   const publicClient = getPublicClient();
-  const [nonce, fees, gasLimit] = await Promise.all([
+  const [rpcNonce, fees, gasLimit] = await Promise.all([
     publicClient.getTransactionCount({
       address: params.account.address,
       blockTag: "pending",
@@ -188,6 +190,11 @@ export async function sendSignedTxSync(params: {
           fallbackGas: params.fallbackGas ?? 350_000n,
         }),
   ]);
+
+  const addrKey = params.account.address.toLowerCase();
+  const prev = lastNonceByAddr.get(addrKey);
+  const nonce = prev !== undefined && rpcNonce <= prev ? prev + 1 : rpcNonce;
+  lastNonceByAddr.set(addrKey, nonce);
 
   const maxPriorityFeePerGas = fees.maxPriorityFeePerGas ?? 2_000_000_000n;
   const maxFeePerGas =

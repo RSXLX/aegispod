@@ -34,11 +34,14 @@ function getEnvVar(name: string): string {
 export function getDemoSigners(): {
   owner: PrivateKeyAccount;
   guardian: PrivateKeyAccount;
+  escapePod: PrivateKeyAccount;
 } {
   const ownerKey = getEnvVar("OWNER_PRIVATE_KEY") as `0x${string}`;
   const guardianKey = getEnvVar("GUARDIAN_PRIVATE_KEY") as `0x${string}`;
+  const escapePodKey = getEnvVar("ESCAPE_POD_PRIVATE_KEY") as `0x${string}`;
   return {
     owner: privateKeyToAccount(ownerKey),
     guardian: privateKeyToAccount(guardianKey),
+    escapePod: privateKeyToAccount(escapePodKey),
   };
 }

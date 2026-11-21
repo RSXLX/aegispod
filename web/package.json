@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "qrcode": "1.5.4",
+    "three": "^0.187.0",
     "viem": "2.23.15"
   },
   "devDependencies": {
