@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07090f">
+  <title>AegisPod — Monad 反诈冷静期刹车 &amp; 一键多资产逃生舱</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v4"/>
+            <path d="M12 16h.01"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title-row">
+            <h1>AegisPod</h1>
+            <span class="chip chip-cyan">Monad Testnet · 10143</span>
+          </div>
+          <p class="brand-sub">热钱包反诈冷静期刹车 &amp; 600ms 单笔原子多资产逃生舱</p>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <div class="live-telemetry" aria-label="链上实时心跳">
+          <span class="dot-live" aria-hidden="true"></span>
+          <span id="hdr-block">区块 #—</span>
+          <span class="sep">|</span>
+          <span id="hdr-epoch">Epoch #—</span>
+        </div>
+
+        <div class="view-tabs" role="group" aria-label="视图切换">
+          <button type="button" class="tab-btn active" data-view="split">双屏总控</button>
+          <button type="button" class="tab-btn" data-view="owner">热钱包端</button>
+          <button type="button" class="tab-btn" data-view="guardian">守护人端</button>
+        </div>
+
+        <button type="button" id="btn-open-qr" class="btn btn-outline btn-sm">
+          📱 双手机扫码
+        </button>
+        <button type="button" id="btn-reseed" class="btn btn-outline btn-sm">
+          🔄 重置演示
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 3-Step Flow Indicator -->
+    <section class="stepper" aria-label="反诈逃生三步闭环">
+      <div class="step-card" id="step-1">
+        <div class="step-head">
+          <span class="step-title">1. 热钱包误签大额转账</span>
+          <span class="step-badge" id="step-1-badge">待触发</span>
+        </div>
+        <p class="step-desc">陌生大额转出强制锁进 60 秒冷静期刹车，骗子拿不到一分钱</p>
+      </div>
+      <div class="step-card" id="step-2">
+        <div class="step-head">
+          <span class="step-title">2. 守护人手机红灯预警</span>
+          <span class="step-badge" id="step-2-badge">监听中</span>
+        </div>
+        <p class="step-desc">毫秒级弹出骗子地址、倒计时与动态紧缩 Monad GasLimit</p>
+      </div>
+      <div class="step-card" id="step-3">
+        <div class="step-head">
+          <span class="step-title">3. 拉下逃生舱（600ms 终局）</span>
+          <span class="step-badge" id="step-3-badge">待命</span>
+        </div>
+        <p class="step-desc">单笔原子交易冻结账户 + 作废骗子队列 + 扫空 5 类资产至冷钱包</p>
+      </div>
+    </section>
+
+    <!-- Live Status & Last Monad Sync Receipt -->
+    <section class="status-area" role="status" aria-live="polite">
+      <div id="status-banner" class="status-banner hidden">
+        <span id="status-text"></span>
+        <a id="status-explorer" href="#" target="_blank" rel="noreferrer" class="receipt-link hidden">
+          Monadscan 查验 ↗
+        </a>
+      </div>
+
+      <div id="receipt-grid" class="receipt-grid hidden">
+        <div class="receipt-cell">
+          <span class="cell-label">最近上链动作</span>
+          <strong id="rcpt-action">—</strong>
+        </div>
+        <div class="receipt-cell">
+          <span class="cell-label">Monad 确认耗时 / RPC</span>
+          <strong id="rcpt-latency" class="text-emerald">—</strong>
+        </div>
+        <div class="receipt-cell">
+          <span class="cell-label">实耗 Gas / 紧缩上限</span>
+          <strong id="rcpt-gas" class="mono text-cyan">—</strong>
+        </div>
+        <div class="receipt-cell">
+          <span class="cell-label">交易哈希 &amp; 区块</span>
+          <a id="rcpt-hash" href="#" target="_blank" rel="noreferrer" class="mono text-cyan link-underline">—</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dual-Phone Console Grid -->
+    <div id="console-grid" class="console-grid view-split">
+      <!-- LEFT PHONE: HOT WALLET (OWNER) -->
+      <section id="panel-owner" class="panel panel-owner" aria-labelledby="owner-title">
+        <div class="panel-head">
+          <div class="panel-identity">
+            <div class="role-icon role-owner" aria-hidden="true">📱</div>
+            <div>
+              <h2 id="owner-title">热钱包端（受守护保险库）</h2>
+              <p class="mono muted small">
+                Vault: <a id="vault-addr-link" href="#" target="_blank" rel="noreferrer" class="text-cyan">加载中...</a>
+              </p>
+            </div>
+          </div>
+          <span id="owner-status-pill" class="pill pill-emerald">🛡️ 守护布防中</span>
+        </div>
+
+        <div class="section-block">
+          <div class="block-label-row">
+            <span>热钱包保险库资产清单（已登记自动扫空）</span>
+            <span id="tracked-counts" class="mono muted">—</span>
+          </div>
+          <div class="asset-grid" id="vault-assets">
+            <div class="asset-card">
+              <span class="asset-sym">MON <em>Native</em></span>
+              <strong class="asset-val mono" id="v-mon">—</strong>
+            </div>
+            <div class="asset-card">
+              <span class="asset-sym">mUSDT <em>ERC-20</em></span>
+              <strong class="asset-val mono" id="v-usdt">—</strong>
+            </div>
+            <div class="asset-card">
+              <span class="asset-sym">mWETH <em>ERC-20</em></span>
+              <strong class="asset-val mono" id="v-weth">—</strong>
+            </div>
+            <div class="asset-card">
+              <span class="asset-sym">mWBTC <em>ERC-20</em></span>
+              <strong class="asset-val mono" id="v-wbtc">—</strong>
+            </div>
+            <div class="asset-card">
+              <span class="asset-sym">Aegis <em>NFT</em></span>
+              <strong class="asset-val mono" id="v-nft">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage Demo Trigger -->
+        <div class="scam-box">
+          <div class="scam-box-text">
+            <strong>📞 一键路演：模拟诈骗来电诱导转出 50,000 mUSDT</strong>
+            <p>模拟受害者在恐慌下向陌生地址发起大额转账 → 合约自动触发 60 秒强制冷静期刹车。</p>
+          </div>
+          <button type="button" id="btn-sim-scam" class="btn btn-amber">
+            📞 模拟诈骗来电
+          </button>
+        </div>
+
+        <!-- Accessible Custom Transfer Form -->
+        <form id="transfer-form" class="transfer-form" aria-labelledby="transfer-form-heading" novalidate>
+          <h3 id="transfer-form-heading" class="sub-heading">自定义发起转账测试</h3>
+
+          <fieldset class="asset-fieldset">
+            <legend>选择转出资产</legend>
+            <div class="radio-row">
+              <label class="radio-pill"><input type="radio" name="asset" value="mUSDT" checked> mUSDT</label>
+              <label class="radio-pill"><input type="radio" name="asset" value="mWETH"> mWETH</label>
+              <label class="radio-pill"><input type="radio" name="asset" value="mWBTC"> mWBTC</label>
+              <label class="radio-pill"><input type="radio" name="asset" value="MON"> MON</label>
+            </div>
+          </fieldset>
+
+          <div class="form-grid-2">
+            <div class="field">
+              <label for="input-to">收款地址 <span aria-hidden="true">*</span></label>
+              <input
+                id="input-to"
+                name="to"
+                type="text"
+                required
+                pattern="^0x[a-fA-F0-9]{40}$"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
+                placeholder="0x..."
+              >
+            </div>
+            <div class="field">
+              <label for="input-amount">转账数量 <span aria-hidden="true">*</span></label>
+              <input
+                id="input-amount"
+                name="amount"
+                type="text"
+                inputmode="decimal"
+                required
+                value="50000"
+              >
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="input-memo">转账备注（可选）</label>
+            <input id="input-memo" name="memo" type="text" value="陌生账户大额转账测试">
+          </div>
+
+          <p id="form-error" role="alert" class="form-error hidden"></p>
+
+          <button type="submit" id="btn-submit-tx" class="btn btn-cyan full-width">
+            发起转账（陌生地址自动进 60s 冷静期刹车）
+          </button>
+        </form>
+
+        <!-- Cooldown Queue -->
+        <div class="section-block">
+          <div class="block-label-row">
+            <span>链上冷静期队列</span>
+            <span>骗子实收：<strong id="scammer-usdt" class="mono text-emerald">0 mUSDT</strong></span>
+          </div>
+          <ul id="transfer-list" class="tx-list">
+            <li class="tx-empty">正在读取 Monad Testnet 队列状态...</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- RIGHT PHONE: GUARDIAN SHIELD -->
+      <section id="panel-guardian" class="panel panel-guardian" aria-labelledby="guardian-title">
+        <div class="panel-head">
+          <div class="panel-identity">
+            <div class="role-icon role-guardian" aria-hidden="true">🛡️</div>
+            <div>
+              <h2 id="guardian-title">守护人端（家人 / 合伙人手机）</h2>
+              <p class="mono muted small">
+                Guardian: <span id="guardian-addr">—</span>
+              </p>
+            </div>
+          </div>
+          <span id="guardian-status-pill" class="pill pill-slate">🟢 实时监听链上事件</span>
+        </div>
+
+        <!-- Dynamic Alert Banner -->
+        <div id="guardian-alert-box" class="guardian-state state-idle">
+          <strong>🛡️ 当前无异常大额转出</strong>
+          <p>
+            守护人权限由合约锁死：<strong>无法修改冷钱包地址、无法修改阈值、无法把资金转给自己</strong>；危急时刻可一键把全库资产扫往不可篡改逃生舱。
+          </p>
+        </div>
+
+        <!-- HERO ESCAPE POD LEVER -->
+        <button type="button" id="btn-escape-pod" class="btn-escape">
+          <div class="escape-inner">
+            <div>
+              <div class="escape-title" id="escape-btn-title">🚨 一键启动反诈逃生舱</div>
+              <p class="escape-sub">
+                单笔 Monad 交易原子完成：冻结账户 + O(1) 作废骗子队列 + 扫空 MON + 3 ERC-20 + NFT → 冷钱包
+              </p>
+            </div>
+            <span class="escape-arrow" aria-hidden="true">→</span>
+          </div>
+        </button>
+
+        <!-- Monad GasLimit Optimization Card -->
+        <div class="gas-card">
+          <div class="gas-head">
+            <span>⚡ Monad 按 <code>gas_limit</code> 扣费专属优化</span>
+            <span id="gas-savings-pill" class="pill pill-emerald">省 —% Gas</span>
+          </div>
+          <p class="gas-desc">
+            Monad 异步执行按 <code>gas_limit</code>（而非实际用量）扣费。合约按当前登记资产清单动态计算紧缩上限，杜绝写死高上限白烧 MON：
+          </p>
+          <div class="gas-compare">
+            <div class="gas-metric">
+              <span class="muted small">动态紧缩 gasLimit</span>
+              <strong id="gas-tight" class="mono text-emerald">—</strong>
+            </div>
+            <div class="gas-metric">
+              <span class="muted small">传统写死 gasLimit</span>
+              <strong id="gas-naive" class="mono muted strike">1,500,000</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dual-Confirmation Unfreeze Box -->
+        <div id="unfreeze-box" class="unfreeze-box hidden">
+          <div class="unfreeze-head">🔓 双签解冻机制（单方无法擅自解冻）</div>
+          <p class="muted small">
+            危机解除并更换安全设备后，必须由热钱包 Owner 与守护人 Guardian 双方分别确认才可解冻：
+          </p>
+          <div class="unfreeze-actions">
+            <button type="button" id="btn-unfreeze-owner" class="btn btn-outline">
+              1. Owner 确认解冻
+            </button>
+            <button type="button" id="btn-unfreeze-guardian" class="btn btn-outline">
+              2. Guardian 确认解冻
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- BOTTOM: IMMUTABLE COLD ESCAPE POD -->
+    <section id="panel-escape-pod" class="panel panel-pod" aria-labelledby="pod-title">
+      <div class="panel-head">
+        <div class="panel-identity">
+          <div class="role-icon role-pod" aria-hidden="true">🏦</div>
+          <div>
+            <h2 id="pod-title">不可篡改冷钱包逃生舱（Immutable Escape Pod）</h2>
+            <p class="mono muted small">
+              部署时写死 <code>immutable</code>，任何人都无法篡改：
+              <a id="escape-addr-link" href="#" target="_blank" rel="noreferrer" class="text-emerald">加载中...</a>
+            </p>
+          </div>
+        </div>
+        <span id="pod-status-pill" class="pill pill-emerald">待命接收中</span>
+      </div>
+
+      <div class="asset-grid">
+        <div class="asset-card asset-pod">
+          <span class="asset-sym">MON <em>Native</em></span>
+          <strong class="asset-val mono text-emerald" id="e-mon">—</strong>
+        </div>
+        <div class="asset-card asset-pod">
+          <span class="asset-sym">mUSDT <em>ERC-20</em></span>
+          <strong class="asset-val mono text-emerald" id="e-usdt">—</strong>
+        </div>
+        <div class="asset-card asset-pod">
+          <span class="asset-sym">mWETH <em>ERC-20</em></span>
+          <strong class="asset-val mono text-emerald" id="e-weth">—</strong>
+        </div>
+        <div class="asset-card asset-pod">
+          <span class="asset-sym">mWBTC <em>ERC-20</em></span>
+          <strong class="asset-val mono text-emerald" id="e-wbtc">—</strong>
+        </div>
+        <div class="asset-card asset-pod">
+          <span class="asset-sym">Aegis <em>NFT</em></span>
+          <strong class="asset-val mono text-emerald" id="e-nft">—</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE ON-CHAIN SECURITY INVARIANT PROOF -->
+    <section class="panel" aria-labelledby="sec-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="sec-title">链上安全铁律实时验真（直连 Monad Testnet <code>eth_call</code> 模拟攻防）</h2>
+          <p class="muted small">点击下方任意攻击场景，现场验证合约如何当场 Revert 拦截。</p>
+        </div>
+      </div>
+
+      <div class="sec-grid">
+        <div class="sec-card">
+          <strong>1. 攻击者偷了 Owner 私钥</strong>
+          <p class="muted small">企图把骗子地址加入白名单绕过冷静期</p>
+          <button type="button" class="btn btn-outline btn-sm sec-test-btn" data-test="ownerWhitelistScammer">
+            实测链上拦截
+          </button>
+          <div class="sec-result hidden" id="sec-res-ownerWhitelistScammer"></div>
+        </div>
+
+        <div class="sec-card">
+          <strong>2. 攻击者企图缩短冷静期</strong>
+          <p class="muted small">把 60 秒冷静期篡改为 5 秒快速盗币</p>
+          <button type="button" class="btn btn-outline btn-sm sec-test-btn" data-test="ownerShortenCooldown">
+            实测链上拦截
+          </button>
+          <div class="sec-result hidden" id="sec-res-ownerShortenCooldown"></div>
+        </div>
+
+        <div class="sec-card">
+          <strong>3. 守护人企图监守自盗</strong>
+          <p class="muted small">Guardian 试图直接把资金转到自己钱包</p>
+          <button type="button" class="btn btn-outline btn-sm sec-test-btn" data-test="guardianSteal">
+            实测链上拦截
+          </button>
+          <div class="sec-result hidden" id="sec-res-guardianSteal"></div>
+        </div>
+
+        <div class="sec-card">
+          <strong>4. 骗子强行提前放行队列</strong>
+          <p class="muted small">冷静期未满或逃生舱触发后强行执行转账</p>
+          <button type="button" class="btn btn-outline btn-sm sec-test-btn" data-test="bypassCooldown">
+            实测链上拦截
+          </button>
+          <div class="sec-result hidden" id="sec-res-bypassCooldown"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- NATIVE <dialog>: SIMULATED SCAM CALL -->
+  <dialog id="scam-dialog" closedby="any" aria-labelledby="scam-dialog-title">
+    <div class="dialog-head dialog-head-danger">
+      <h2 id="scam-dialog-title">📞 模拟场景：诈骗电话正在诱导转账</h2>
+      <p>「你好，你的账户涉及洗钱，请立即将 50,000 mUSDT 转入指定安全核查地址，否则马上冻结！」</p>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-summary">
+        <div><span>诱骗转出资产</span><strong class="mono text-amber">50,000 mUSDT</strong></div>
+        <div><span>骗子地址（非白名单）</span><strong id="dlg-scammer-addr" class="mono text-red">—</strong></div>
+        <div><span>AegisPod 预期响应</span><strong class="text-cyan">强制触发 60 秒冷静期刹车，资金不离库</strong></div>
+      </div>
+      <form method="dialog" class="dialog-actions">
+        <button type="submit" value="cancel" autofocus class="btn btn-outline">取消</button>
+        <button type="button" id="btn-confirm-scam" class="btn btn-amber">确认模拟误签转出</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- NATIVE <dialog>: DUAL-PHONE QR PAIRING -->
+  <dialog id="qr-dialog" closedby="any" aria-labelledby="qr-dialog-title">
+    <div class="dialog-head">
+      <h2 id="qr-dialog-title">📱 现场双手机扫码联动演示</h2>
+      <p>同一 Wi-Fi 下，手机 1 扫左侧打开「热钱包端」，手机 2 扫右侧打开「守护人端」，直连同一份 Monad Testnet 真实合约。</p>
+    </div>
+    <div class="dialog-body">
+      <div class="qr-grid">
+        <div class="qr-card">
+          <span class="text-amber"><strong>手机 1 · 热钱包端</strong></span>
+          <img id="qr-owner-img" alt="热钱包端二维码" width="180" height="180">
+          <span id="qr-owner-url" class="mono muted tiny"></span>
+        </div>
+        <div class="qr-card">
+          <span class="text-red"><strong>手机 2 · 守护人端</strong></span>
+          <img id="qr-guardian-img" alt="守护人端二维码" width="180" height="180">
+          <span id="qr-guardian-url" class="mono muted tiny"></span>
+        </div>
+      </div>
+      <form method="dialog" class="dialog-actions">
+        <button type="submit" value="close" autofocus class="btn btn-cyan">关闭</button>
+      </form>
+    </div>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

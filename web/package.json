@@ -1,0 +1,20 @@
+{
+  "name": "aegispod-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4",
+    "viem": "2.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.4",
+    "@types/qrcode": "1.5.5",
+    "tsx": "4.19.3",
+    "typescript": "5.7.3"
+  }
+}

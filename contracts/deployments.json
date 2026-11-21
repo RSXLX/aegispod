@@ -1,0 +1,23 @@
+{
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "deployedAt": "2026-11-21T06:58:35.163Z",
+  "contracts": {
+    "AegisPodVault": "0x0026acd0077d7518d51c654887d1e9a19789b23a",
+    "MockUSDT": "0xcd52bcd5f30300683d4c1ae76ee0d08af3998d12",
+    "MockWETH": "0x266bfcbc02ac18e7222611f7bc7bfa789a447a69",
+    "MockWBTC": "0x5ae62776ff524a9f7f91e87687eee96650c89682",
+    "AegisGenesisNFT": "0xc8b469fa90f13b9ad485ea6aeb9b9f41200a2043"
+  },
+  "roles": {
+    "owner": "0x7b17694eE903E9784A302D3E1ef6d83d728AB647",
+    "guardian": "0x71EB999eb4e1E84dfb225032d49A93B6B4A09FD8",
+    "escapePod": "0xbd0CA35BAEA0485C6F0De906EC685ffB397aD345",
+    "scammer": "0x953b0DB8d3D4e1E394a618C1D686aa4239a33bB1"
+  },
+  "constructorParams": {
+    "cooldownSeconds": "60",
+    "nativeThreshold": "50000000000000000"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "aegispod-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "tsx scripts/compile.ts",
+    "test": "tsx scripts/test-local.ts",
+    "setup:wallets": "tsx scripts/setup-wallets.ts",
+    "deploy:testnet": "tsx scripts/deploy.ts",
+    "verify:testnet": "tsx scripts/verify.ts",
+    "demo:smoke": "tsx scripts/live-smoke.ts"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.2.0",
+    "dotenv": "16.4.7",
+    "solc": "0.8.28",
+    "viem": "2.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.4",
+    "tsx": "4.19.3",
+    "typescript": "5.7.3"
+  }
+}

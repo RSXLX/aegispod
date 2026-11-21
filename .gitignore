@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Secrets & local envs
+.env
+.env.*
+!.env.example
+.mojo/
+
+# Build outputs
+contracts/artifacts/
+contracts/cache/
+contracts/out/
+contracts/typechain-types/
+web/.next/
+web/out/
+.DS_Store
+*.log

@@ -1,0 +1,290 @@
+export const AEGIS_VAULT_ABI = [
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "guardian",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "escapePod",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "cooldownSeconds",
+    inputs: [],
+    outputs: [{ type: "uint64" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "nativeThreshold",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "frozen",
+    inputs: [],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "epoch",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "nextTxId",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "unfreezeApprovedByOwner",
+    inputs: [],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "unfreezeApprovedByGuardian",
+    inputs: [],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getTrackedAssetCounts",
+    inputs: [],
+    outputs: [
+      { name: "tokenCount", type: "uint256" },
+      { name: "nftCount", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "recommendedEscapeGasLimit",
+    inputs: [
+      { name: "extraTokenCount", type: "uint256" },
+      { name: "extraNftCount", type: "uint256" },
+    ],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getRegisteredTokens",
+    inputs: [],
+    outputs: [{ type: "address[]" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getRegisteredNfts",
+    inputs: [],
+    outputs: [
+      {
+        type: "tuple[]",
+        components: [
+          { name: "nft", type: "address" },
+          { name: "tokenId", type: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getPendingTransfers",
+    inputs: [{ name: "maxCount", type: "uint256" }],
+    outputs: [
+      {
+        type: "tuple[]",
+        components: [
+          { name: "id", type: "uint256" },
+          { name: "epoch", type: "uint256" },
+          { name: "token", type: "address" },
+          { name: "to", type: "address" },
+          { name: "amount", type: "uint256" },
+          { name: "queuedAt", type: "uint64" },
+          { name: "unlockTime", type: "uint64" },
+          { name: "executed", type: "bool" },
+          { name: "cancelled", type: "bool" },
+          { name: "memo", type: "string" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "requestNativeTransfer",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "memo", type: "string" },
+    ],
+    outputs: [
+      { name: "txId", type: "uint256" },
+      { name: "queued", type: "bool" },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "requestERC20Transfer",
+    inputs: [
+      { name: "token", type: "address" },
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "memo", type: "string" },
+    ],
+    outputs: [
+      { name: "txId", type: "uint256" },
+      { name: "queued", type: "bool" },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "executeQueuedTransfer",
+    inputs: [{ name: "txId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "cancelQueuedTransfer",
+    inputs: [{ name: "txId", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "triggerEscapePod",
+    inputs: [
+      { name: "extraTokens", type: "address[]" },
+      {
+        name: "extraNfts",
+        type: "tuple[]",
+        components: [
+          { name: "nft", type: "address" },
+          { name: "tokenId", type: "uint256" },
+        ],
+      },
+    ],
+    outputs: [
+      { name: "nativeSwept", type: "uint256" },
+      { name: "erc20SweptCount", type: "uint256" },
+      { name: "nftSweptCount", type: "uint256" },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "approveUnfreeze",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setWhitelistedRecipient",
+    inputs: [
+      { name: "recipient", type: "address" },
+      { name: "allowed", type: "bool" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "increaseCooldown",
+    inputs: [{ name: "newCooldown", type: "uint64" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
+export const MOCK_ERC20_ABI = [
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "decimals",
+    inputs: [],
+    outputs: [{ type: "uint8" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "symbol",
+    inputs: [],
+    outputs: [{ type: "string" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "mint",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
+export const MOCK_NFT_ABI = [
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "ownerOf",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "nextTokenId",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "mint",
+    inputs: [{ name: "to", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "nonpayable",
+  },
+] as const;
