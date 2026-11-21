@@ -683,7 +683,7 @@ const server = http.createServer(async (req, res) => {
   res.end("Not Found");
 });
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, process.env.HOST || "0.0.0.0", () => {
   console.log(`🛡️  AegisPod running at:`);
   console.log(`   Local : http://localhost:${PORT}`);
   console.log(`   LAN   : http://${getLanIp()}:${PORT} (scan QR on phones!)`);

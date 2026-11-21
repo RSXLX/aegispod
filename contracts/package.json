@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "compile": "tsx scripts/compile.ts",
-    "test": "tsx scripts/test-local.ts",
+    "test": "npm run test:security",
     "setup:wallets": "tsx scripts/setup-wallets.ts",
     "deploy:testnet": "tsx scripts/deploy.ts",
     "verify:testnet": "tsx scripts/verify.ts",
-    "demo:smoke": "tsx scripts/live-smoke.ts"
+    "demo:smoke": "tsx scripts/live-smoke.ts",
+    "test:security": "tsx scripts/test-security.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.2.0",

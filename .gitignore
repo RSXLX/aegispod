@@ -17,3 +17,8 @@ web/.next/
 web/out/
 .DS_Store
 *.log
+
+# Local production operations and video build workspace
+/ops/
+/demo-video/
+/*.mp4
